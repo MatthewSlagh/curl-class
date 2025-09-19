@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+      - php5.x-master
+  pull_request:
+  schedule:
+    - cron: '0 17 * * *'
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        php-version:
+          - '8.0'
+          - '8.1'
+          - '8.2'
+          - '8.3'
+          - '8.4'
+        future-release: [false]
+        include:
+          - php-version: '8.5'
+            future-release: true
+      fail-fast: false
+    name: PHP ${{ matrix.php-version }}
+    continue-on-error: ${{ matrix.future-release }}
+
+    steps:
+      - name: Set up php
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Test
+        run: bash tests/run.sh
+        env:
+          CI_PHP_VERSION: ${{ matrix.php-version }}
+          CI_PHP_FUTURE_RELEASE: ${{ matrix.future-release }}
